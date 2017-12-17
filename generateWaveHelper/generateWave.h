@@ -2,6 +2,7 @@
 #include <vector>
 #include <complex>
 #include <functional>
+#include <cassert>
 
 struct Graph
 {
@@ -41,10 +42,7 @@ public:
    //信号をずらす為の関数
    Graph moveAmplitude(const double start_time);
 
-
-   //TODO:副作用酷すぎ。再確保したコンストラクタを返す。
-   GenerateWave operator *(GenerateWave gw);
-   GenerateWave operator +(GenerateWave gw);
+   GenerateWave operator +(GenerateWave gw) const;
 
    template<typename T>
    GenerateWave operator *(const T multiple);
@@ -61,16 +59,42 @@ public:
 template <typename T>
 GenerateWave GenerateWave::operator*(const T multiple)
 {
+   //型が数値型ではないので、計算不可
    static_assert(std::is_arithmetic<T>::value, "Typename is not arithmetic.");
 
    const auto size = this->v_.size();
-   std::vector<std::complex<double>> output;//出力先
-   output.resize(size);
+
+   //コピーを作成
+   auto new_gw = *this;
 
    for (unsigned int i = 0; i < size; ++i)
    {
-      this->v_[i] = this->v_[i] * multiple;
+      new_gw.v_[i] = new_gw.v_[i] * multiple;
    }
 
-   return *this;
+   return new_gw;
+}
+
+template <>
+inline GenerateWave GenerateWave::operator*<GenerateWave>(GenerateWave gw)
+{
+   const auto size = this->v_.size();
+
+   if (size != gw.v_.size() || this->sec_ != gw.sec_ || this->fs_ != gw.fs_)
+   {
+      //範囲時間が違う
+      assert(this->sec_ != gw.sec_);
+      //サンプリング周波数が違う
+      assert(this->fs_ != gw.fs_);
+   }
+
+   //コピーを作成
+   auto new_gw = *this;
+
+   for (unsigned int i = 0; i < size; ++i)
+   {
+      new_gw.v_[i] = new_gw.v_[i] * gw.v_[i];
+   }
+
+   return new_gw;
 }

@@ -218,7 +218,7 @@ Graph GenerateWave::moveAmplitude(const double move_time)
    return {t_,v_};
 }
 
-GenerateWave GenerateWave::operator*(GenerateWave gw)
+GenerateWave GenerateWave::operator+(GenerateWave gw) const
 {
    const auto size = this->v_.size();
 
@@ -230,33 +230,17 @@ GenerateWave GenerateWave::operator*(GenerateWave gw)
       assert(this->fs_ != gw.fs_);
    }
 
-   for (unsigned int i = 0; i < size; ++i)
-   {
-      this->v_[i] = this->v_[i] * gw.v_[i];
-   }
-
-   return *this;
-}
-
-GenerateWave GenerateWave::operator+(GenerateWave gw)
-{
-   const auto size = this->v_.size();
-
-   if (size != gw.v_.size() || this->sec_ != gw.sec_ || this->fs_ != gw.fs_)
-   {
-      //範囲時間が違う
-      assert(this->sec_ != gw.sec_);
-      //サンプリング周波数が違う
-      assert(this->fs_ != gw.fs_);
-   }
+   //コピーを作成
+   auto new_gw = *this;
 
    for (unsigned int i = 0; i < size; ++i)
    {
-      this->v_[i] = this->v_[i] + gw.v_[i];
+      new_gw.v_[i] = new_gw.v_[i] + gw.v_[i];
    }
 
-   return *this;
+   return new_gw;
 }
+
 
 Graph GenerateWave::applyFft()
 {

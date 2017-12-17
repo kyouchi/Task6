@@ -37,7 +37,7 @@ int main()
    plot(graph2.getGraph().x, graph2.getGraph().y, "t[sec]", "Amplitude", "Waveform", "waveform2.plt", "command2.bat").executionPlot();
 
    //AM変調波
-   auto graph3 = (graph1*k)*graph2+graph2;
+   auto graph3 = (graph1*k) * graph2 + graph2;
    plot(graph3.getGraph().x, graph3.getGraph().y, "t[sec]", "Amplitude", "Waveform", "waveform3.plt", "command3.bat").executionPlot();
 
    return 0;
