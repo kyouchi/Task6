@@ -249,6 +249,6 @@ Graph GenerateWave::applyFft()
    lc_fft(v_, ids, n_level, &output_amplitude_);// FFT変換
 
    output_frequence_.resize(output_amplitude_.size());
-   for (unsigned int i = 0; i < output_frequence_.size(); ++i)output_frequence_[i] = static_cast<double>(i);
+   for (unsigned int i = 0; i < output_frequence_.size(); ++i)output_frequence_[i] = (static_cast<double>(i) / sec_);
    return {output_frequence_,output_amplitude_};
 }
