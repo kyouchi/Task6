@@ -4,31 +4,31 @@
 #include <fstream>
 #include <complex>
 
-class plot
+class Plot
 {
 protected:
-   std::ofstream writing_file;
-   std::ofstream writing_command_file;
+   std::ofstream writing_file_;
+   std::ofstream writing_command_file_;
 
-   std::vector<double> x;
-   std::vector<double> y;
-   std::vector<std::complex<double>> y_complex;
-   std::string xlabel;
-   std::string ylabel;
-   std::string graph_title;
-   std::string filename;
-   std::string command_filename;
+   std::vector<double> x_;
+   std::vector<double> y_;
+   std::vector<std::complex<double>> y_complex_;
+   std::string xlabel_;
+   std::string ylabel_;
+   std::string graph_title_;
+   std::string filename_;
+   std::string command_filename_;
 
    bool printFile();
-   bool printFile_abs();
+   bool printFileAbs();
    bool printCommandFile();
-   bool printCommandFile_abs();
+   bool printCommandFileAbs();
 
 public:
-   plot(std::vector<double> x, std::vector<double> y, std::string xlabel, std::string ylabel, std::string graph_title, std::string Filename, std::string command_filename);
-   plot(std::vector<double> x, std::vector<std::complex<double>> y, std::string xlabel, std::string ylabel, std::string graph_title, std::string Filename, std::string command_filename);
-   ~plot();
+   Plot(const std::vector<double> x, const std::vector<double> y, const std::string xlabel, const std::string ylabel, const std::string graph_title, const std::string filename, const std::string command_filename);
+   Plot(const std::vector<double> x, const std::vector<std::complex<double>> y, const std::string xlabel, const std::string ylabel, const std::string graph_title, const std::string filename, const std::string command_filename);
+   ~Plot();
 
    void executionPlot();
-   void executionPlot_abs();
+   void executionPlotAbs();
 };

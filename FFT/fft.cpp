@@ -63,7 +63,7 @@ void lc_fft(
     auto& F = *pout;
     {
         F.resize( N );
-        for( auto i=0; i<N; ++i )
+        for(unsigned i=0; i<N; ++i )
             F[ i ] = a[ids[i]];
     }
     unsigned int po2 = 1;
@@ -80,7 +80,7 @@ void lc_fft(
         // バタフライダイヤグラム：Wを共有する項をまとめて計算。
         for( auto k=0; k<po2m; ++k )
         {
-            for( auto j=0; j<N; j+=po2 )
+            for(unsigned j=0; j<N; j+=po2 )
             {
                 auto pa = &F[j+k];
                 auto pb = &F[j+k+po2m];

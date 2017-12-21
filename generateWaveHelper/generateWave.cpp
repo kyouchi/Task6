@@ -2,12 +2,53 @@
 #include "generateWave.h"
 #include "../FFT/fft.h"
 #include <cassert>
-#include <memory>
+#include <thread>
+
+Graph::Graph(const std::vector<double> x, const std::vector<std::complex<double>> y) : x(x), y(y)
+{
+}
+
+Graph::Graph(const Graph& obj)
+{
+   //まずは領域を確保(必要のない気もするが)
+   this->x.resize(obj.x.size());
+   this->y.resize(obj.y.size());
+
+   //要素コピーを実施
+   std::copy(obj.x.begin(), obj.x.end(), this->x.begin());
+   std::copy(obj.y.begin(), obj.y.end(), this->y.begin());
+}
+
+Graph Graph::operator+(Graph gw) const
+{
+   if (this->x.size() != gw.x.size() || this->y.size() != gw.y.size() || this->x.size() != gw.y.size() || this->y.size() != gw.x.size())
+   {
+      //xのサイズが違う
+      assert(this->x.size() != gw.x.size());
+      //yのサイズが違う
+      assert(this->y.size() != gw.y.size());
+
+      //xとyでサイズが違う
+      assert(this->x.size() != gw.y.size());
+      assert(this->y.size() != gw.x.size());
+   }
+
+   const auto size = this->x.size();
+   //コピーを作成
+   auto new_gw = *this;
+
+   for (unsigned int i = 0; i < size; ++i)
+   {
+      new_gw.y[i] = new_gw.y[i] + gw.y[i];
+   }
+
+   return new_gw;
+}
 
 GenerateWave::GenerateWave(const double fs, const double sec) : fs_(fs), sec_(sec)
 {
-   t_.resize(sec * fs);
-   v_.assign(sec * fs, 0.0);//0で初期化
+   t_.resize(static_cast<unsigned>(sec * fs));
+   v_.assign(static_cast<unsigned>(sec * fs), 0.0);//0で初期化
 }
 
 GenerateWave::~GenerateWave()
@@ -34,22 +75,29 @@ Graph GenerateWave::generateSquare(const double tau, const double a)
    const auto all_sum_point = (sec_ * fs_);
    const auto center_point = all_sum_point / 2.0;
    const auto range = (fs_ * (tau / 2.0));
-   for (auto i = center_point; i < all_sum_point; ++i)
-   {
-      t_[i] = (i - center_point) / fs_;
-      if (center_point + range > i)
+
+   std::thread thread1([&] {
+      for (auto i = static_cast<unsigned>(center_point); i < all_sum_point; ++i)
       {
-         v_[i] = a;
+         t_[i] = (i - center_point) / fs_;
+         if (center_point + range > i)
+         {
+            v_[i] = a;
+         }
       }
-   }
-   for (auto i = center_point - 1; i > 0; --i)
-   {
-      t_[i] = (i - center_point) / fs_;
-      if (center_point - range < i)
+   });
+   std::thread thread2([&] {
+      for (auto i = static_cast<unsigned>(center_point -1); i > 0; --i)
       {
-         v_[i] = a;
+         t_[i] = (i - center_point) / fs_;
+         if (center_point - range < i)
+         {
+            v_[i] = a;
+         }
       }
-   }
+   });
+   thread1.join();
+   thread2.join();
    return {t_,v_};
 }
 
@@ -58,22 +106,29 @@ Graph GenerateWave::generateTriangle(const double tau, const double a)
    const auto all_sum_point = (sec_ * fs_);
    const auto center_point = all_sum_point / 2.0;
    const auto range = (fs_ * (tau / 2.0));
-   for (auto i = center_point; i < all_sum_point; ++i)
-   {
-      t_[i] = (i - center_point) / fs_;
-      if (center_point + range > i)
+
+   std::thread thread1([&] {
+      for (auto i = static_cast<unsigned>(center_point); i < all_sum_point; ++i)
       {
-         v_[i] = a - (a / ((tau / 2.0) * fs_)) * (i - center_point);
+         t_[i] = (i - center_point) / fs_;
+         if (center_point + range > i)
+         {
+            v_[i] = a - (a / ((tau / 2.0) * fs_)) * (i - center_point);
+         }
       }
-   }
-   for (auto i = center_point - 1; i > 0; --i)
-   {
-      t_[i] = (i - center_point) / fs_;
-      if (center_point - range < i)
+   });
+   std::thread thread2([&] {
+      for (auto i = static_cast<unsigned>(center_point - 1); i > 0; --i)
       {
-         v_[i] = a + (a / ((tau / 2.0) * fs_)) * (i - center_point);
+         t_[i] = (i - center_point) / fs_;
+         if (center_point - range < i)
+         {
+            v_[i] = a + (a / ((tau / 2.0) * fs_)) * (i - center_point);
+         }
       }
-   }
+   });
+   thread1.join();
+   thread2.join();
    return {t_,v_};
 }
 
@@ -82,22 +137,29 @@ Graph GenerateWave::generateCosineWave(const double tau, const double a, const d
    const auto all_sum_point = (sec_ * fs_);
    const auto center_point = all_sum_point / 2.0;
    const auto range = (fs_ * (tau / 2.0));
-   for (auto i = center_point; i < all_sum_point; ++i)
-   {
-      t_[i] = (i - center_point) / fs_;
-      if (center_point + range > i)
+
+   std::thread thread1([&] {
+      for (auto i = static_cast<unsigned>(center_point); i < all_sum_point; ++i)
       {
-         v_[i] = a * std::cos(cycle * pi * t_[i]);//Cosineを乗算
+         t_[i] = (i - center_point) / fs_;
+         if (center_point + range > i)
+         {
+            v_[i] = a * std::cos(cycle * pi * t_[i]);//Cosineを乗算
+         }
       }
-   }
-   for (auto i = center_point - 1; i > 0; --i)
-   {
-      t_[i] = (i - center_point) / fs_;
-      if (center_point - range < i)
+   });
+   std::thread thread2([&] {
+      for (auto i = static_cast<unsigned>(center_point - 1); i > 0; --i)
       {
-         v_[i] = a * std::cos(cycle * pi * t_[i]);//Cosineを乗算
+         t_[i] = (i - center_point) / fs_;
+         if (center_point - range < i)
+         {
+            v_[i] = a * std::cos(cycle * pi * t_[i]);//Cosineを乗算
+         }
       }
-   }
+   });
+   thread1.join();
+   thread2.join();
    return {t_,v_};
 }
 
@@ -105,16 +167,23 @@ Graph GenerateWave::generateCarrierWave(const double fc, const double a)
 {
    const auto all_sum_point = (sec_ * fs_);
    const auto center_point = all_sum_point / 2.0;
-   for (auto i = center_point; i < all_sum_point; ++i)
-   {
-      t_[i] = (i - center_point) / fs_;
-      v_[i] = a * std::cos(2 * pi * fc * t_[i]);//Cosineを乗算
-   }
-   for (auto i = center_point - 1; i > 0; --i)
-   {
-      t_[i] = (i - center_point) / fs_;
-      v_[i] = a * std::cos(2 * pi * fc * t_[i]);//Cosineを乗算
-   }
+
+   std::thread thread1([&] {
+      for (auto i = static_cast<unsigned>(center_point); i < all_sum_point; ++i)
+      {
+         t_[i] = (i - center_point) / fs_;
+         v_[i] = a * std::cos(2 * pi * fc * t_[i]);//Cosineを乗算
+      }
+   });
+   std::thread thread2([&] {
+      for (auto i = static_cast<unsigned>(center_point - 1); i > 0; --i)
+      {
+         t_[i] = (i - center_point) / fs_;
+         v_[i] = a * std::cos(2 * pi * fc * t_[i]);//Cosineを乗算
+      }
+   });
+   thread1.join();
+   thread2.join();
    return {t_,v_};
 }
 
@@ -123,22 +192,27 @@ Graph GenerateWave::generatePow2CosineWave(const double tau, const double a, con
    const auto all_sum_point = (sec_ * fs_);
    const auto center_point = all_sum_point / 2.0;
    const auto range = (fs_ * (tau / 2.0));
-   for (auto i = center_point; i < all_sum_point; ++i)
-   {
-      t_[i] = (i - center_point) / fs_;
-      if (center_point + range > i)
+
+   std::thread thread1([&] {
+      for (auto i = static_cast<unsigned>(center_point); i < all_sum_point; ++i)
       {
-         v_[i] = a * std::cos(cycle * pi * t_[i]) * std::cos(cycle * pi * t_[i]);//Cosineを乗算
+         t_[i] = (i - center_point) / fs_;
+         if (center_point + range > i)
+         {
+            v_[i] = a * std::cos(cycle * pi * t_[i]) * std::cos(cycle * pi * t_[i]);//Cosineを乗算
+         }
       }
-   }
-   for (auto i = center_point - 1; i > 0; --i)
-   {
-      t_[i] = (i - center_point) / fs_;
-      if (center_point - range < i)
+   });
+   std::thread thread2([&] {
+      for (auto i = static_cast<unsigned>(center_point - 1); i > 0; --i)
       {
-         v_[i] = a * std::cos(cycle * pi * t_[i]) * std::cos(cycle * pi * t_[i]);//Cosineを乗算
+         t_[i] = (i - center_point) / fs_;
+         if (center_point - range < i)
+         {
+            v_[i] = a * std::cos(cycle * pi * t_[i]) * std::cos(cycle * pi * t_[i]);//Cosineを乗算
+         }
       }
-   }
+   });
    return {t_,v_};
 }
 
@@ -153,10 +227,9 @@ Graph GenerateWave::generatePrbsWave(const double ft, const std::vector<double> 
    }
 
    const auto all_sum_point = (sec_ * fs_);
-   const auto all_prbs_sum_point = ft * prbs.size();
-   const auto diff_point = (all_sum_point - all_prbs_sum_point) / 2;//ずれる距離(Sample点)
-
-   const auto center_point = all_sum_point / 2.0;
+   //const auto all_prbs_sum_point = ft * prbs.size();
+   //const auto diff_point = (all_sum_point - all_prbs_sum_point) / 2;//ずれる距離(Sample点)
+   //const auto center_point = all_sum_point / 2.0;
 
    auto index = 0;
    auto itr = prbs.begin();
@@ -245,7 +318,7 @@ GenerateWave GenerateWave::operator+(GenerateWave gw) const
 Graph GenerateWave::applyFft()
 {
    std::vector<int> ids;
-   const auto n_level = lc_fft_calc_ids(fs_ * sec_, &ids);// FFT事前計算
+   const auto n_level = lc_fft_calc_ids(static_cast<int>(fs_ * sec_), &ids);// FFT事前計算
    lc_fft(v_, ids, n_level, &output_amplitude_);// FFT変換
 
    output_frequence_.resize(output_amplitude_.size());

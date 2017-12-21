@@ -6,8 +6,16 @@
 
 struct Graph
 {
+   Graph(const std::vector<double>x, std::vector<std::complex<double>> y);
+   Graph(const Graph &obj);
    std::vector<double> x;
    std::vector<std::complex<double>> y;
+private:
+
+   Graph operator +(Graph gw) const;
+
+   template<typename T>
+   Graph operator *(const T multiple);
 };
 
 class GenerateWave final
@@ -55,6 +63,52 @@ private:
 public:
    Graph applyFft();
 };
+
+template <typename T>
+Graph Graph::operator*(const T multiple)
+{
+   //型が数値型ではないので、計算不可
+   static_assert(std::is_arithmetic<T>::value, "Typename is not arithmetic.");
+
+   const auto size = this->y.size();
+
+   //コピーを作成
+   auto new_gw = *this;
+
+   for (unsigned int i = 0; i < size; ++i)
+   {
+      new_gw.y[i] = new_gw.y[i] * multiple;
+   }
+
+   return new_gw;
+}
+
+template <>
+inline Graph Graph::operator*<Graph>(Graph gw)
+{
+   if (this->x.size() != gw.x.size() || this->y.size() != gw.y.size() || this->x.size() != gw.y.size() || this->y.size() != gw.x.size())
+   {
+      //xのサイズが違う
+      assert(this->x.size() != gw.x.size());
+      //yのサイズが違う
+      assert(this->y.size() != gw.y.size());
+
+      //xとyでサイズが違う
+      assert(this->x.size() != gw.y.size());
+      assert(this->y.size() != gw.x.size());
+   }
+
+   const auto size = this->x.size();
+   //コピーを作成
+   auto new_gw = *this;
+
+   for (unsigned int i = 0; i < size; ++i)
+   {
+      new_gw.y[i] = new_gw.y[i] * gw.y[i];
+   }
+
+   return new_gw;
+}
 
 template <typename T>
 GenerateWave GenerateWave::operator*(const T multiple)
